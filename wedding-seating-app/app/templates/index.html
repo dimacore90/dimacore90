@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Найти место за столом{% endblock %}
+
+{% block content %}
+<section class="guest-hero">
+  <div class="ornament">♡</div>
+  <p class="eyebrow">Добро пожаловать на свадьбу</p>
+  <h1>Найдите своё место за праздничным столом</h1>
+  <p class="lead">Введите имя и фамилию так, как они указаны в приглашении.</p>
+
+  <form class="search-form" action="/result" method="post">
+    <label>
+      <span>Имя</span>
+      <input type="text" name="first_name" autocomplete="given-name" required placeholder="Анна">
+    </label>
+    <label>
+      <span>Фамилия</span>
+      <input type="text" name="last_name" autocomplete="family-name" required placeholder="Иванова">
+    </label>
+    <button type="submit">Найти моё место</button>
+  </form>
+</section>
+{% endblock %}

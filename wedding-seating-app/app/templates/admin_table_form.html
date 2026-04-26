@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Новый стол" if mode == "new" else "Редактирование стола" }}{% endblock %}
+{% block main_class %}admin-page narrow{% endblock %}
+
+{% block content %}
+<header class="admin-header">
+  <div>
+    <p class="eyebrow">Админка</p>
+    <h1>{{ "Новый стол" if mode == "new" else "Редактирование стола" }}</h1>
+  </div>
+  <a class="button-link secondary" href="/admin">Назад</a>
+</header>
+
+{% if error %}
+  <p class="error">{{ error }}</p>
+{% endif %}
+
+<form class="admin-form table-form" method="post">
+  <label>
+    <span>ID стола</span>
+    <input type="text" name="id" value="{{ table.id if table else '' }}" required placeholder="table_1">
+  </label>
+  <label>
+    <span>Название</span>
+    <input type="text" name="name" value="{{ table.name if table else '' }}" required placeholder="Стол 1">
+  </label>
+  <div class="form-pair">
+    <label>
+      <span>X</span>
+      <input type="number" name="x" min="0" value="{{ table.x if table else 100 }}" required>
+    </label>
+    <label>
+      <span>Y</span>
+      <input type="number" name="y" min="0" value="{{ table.y if table else 100 }}" required>
+    </label>
+  </div>
+  <label>
+    <span>Форма</span>
+    <select name="shape">
+      <option value="round" {% if table and table.shape == "round" %}selected{% endif %}>Круглый</option>
+      <option value="rectangle" {% if table and table.shape == "rectangle" %}selected{% endif %}>Прямоугольный</option>
+    </select>
+  </label>
+  <label>
+    <span>Количество мест</span>
+    <input type="number" name="seats" min="1" max="40" value="{{ table.seats if table else 8 }}" required>
+  </label>
+  <button type="submit">Сохранить</button>
+</form>
+{% endblock %}

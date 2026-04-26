@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title|default("Гость не найден", true) }}{% endblock %}
+
+{% block content %}
+<section class="guest-hero compact">
+  <div class="ornament">♡</div>
+  <p class="eyebrow">Проверим ещё раз</p>
+  <h1>{{ heading|default("Мы не нашли вас в списке", true) }}</h1>
+  <p class="lead">
+    {{ message|default("Проверьте написание имени и фамилии или обратитесь к организатору.", true) }}
+  </p>
+  <a class="button-link" href="/">Вернуться к поиску</a>
+</section>
+{% endblock %}

@@ -1,0 +1,32 @@
+{
+  "hall": {
+    "width": 1000,
+    "height": 700
+  },
+  "tables": [
+    {
+      "id": "table_1",
+      "name": "Стол 1",
+      "x": 200,
+      "y": 150,
+      "shape": "round",
+      "seats": 8
+    },
+    {
+      "id": "table_2",
+      "name": "Стол 2",
+      "x": 500,
+      "y": 150,
+      "shape": "round",
+      "seats": 10
+    },
+    {
+      "id": "table_3",
+      "name": "Стол 3",
+      "x": 780,
+      "y": 330,
+      "shape": "rectangle",
+      "seats": 8
+    }
+  ]
+}

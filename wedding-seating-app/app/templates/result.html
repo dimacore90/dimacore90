@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Ваше место{% endblock %}
+
+{% block content %}
+<section class="result-header">
+  <p class="eyebrow">Ваше место найдено</p>
+  <h1>{{ guest.first_name }} {{ guest.last_name }}</h1>
+  <div class="result-summary">
+    <span>{{ table.name }}</span>
+    <span>Место {{ guest.seat_number }}</span>
+  </div>
+</section>
+
+<section class="section">
+  <h2>План зала</h2>
+  <div class="hall-map" style="--hall-width: {{ layout.hall.width }}; --hall-height: {{ layout.hall.height }};">
+    {% for item in layout.tables %}
+      <div
+        class="map-table {{ item.shape }} {% if item.id == table.id %}active{% endif %}"
+        style="left: {{ (item.x / layout.hall.width * 100)|round(2) }}%; top: {{ (item.y / layout.hall.height * 100)|round(2) }}%;"
+      >
+        <span>{{ item.name }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section table-detail-section">
+  <h2>{{ table.name }}</h2>
+  <div class="table-detail {{ table.shape }}">
+    <div class="big-table">{{ table.name }}</div>
+    {% for seat in range(1, table.seats + 1) %}
+      <div
+        class="seat {% if seat == guest.seat_number %}selected{% endif %}"
+        style="--angle: {{ (360 / table.seats * (seat - 1))|round(4) }}deg;"
+        title="Место {{ seat }}"
+      >
+        {{ seat }}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="center-actions">
+  <a class="button-link secondary" href="/">Новый поиск</a>
+</div>
+{% endblock %}
