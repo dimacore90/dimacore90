@@ -78,6 +78,58 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - логин: `admin`
 - пароль: `change_me`
 
+## Деплой на Render
+
+Проект подготовлен для Render через файл `render.yaml` в корне репозитория.
+
+### Вариант 1: Blueprint
+
+1. Загрузите репозиторий на GitHub.
+2. В Render нажмите `New` -> `Blueprint`.
+3. Выберите этот репозиторий.
+4. Render прочитает `render.yaml` и создаст web service.
+5. В переменных окружения задайте обязательные значения:
+
+```env
+ADMIN_PASSWORD=надежный_пароль
+```
+
+Для гостей из Google Sheets укажите один из вариантов:
+
+```env
+GOOGLE_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/ID_ТАБЛИЦЫ/export?format=csv&gid=0
+```
+
+или:
+
+```env
+GOOGLE_SHEETS_ID=ID_ТАБЛИЦЫ
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
+```
+
+`SECRET_KEY` Render сгенерирует автоматически.
+
+### Вариант 2: Web Service вручную
+
+Если создаете сервис вручную, выберите:
+
+- Root Directory: `wedding-seating-app`
+- Runtime: `Python`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Instance Type: `Free`
+
+### Важно про бесплатный Render
+
+На бесплатном Render локальная файловая система временная. После redeploy, restart или сна сервиса изменения в файлах могут пропасть.
+
+Для этого проекта это касается:
+
+- `data/layout.json` - схема зала;
+- `data/guests.json` - fallback-список гостей.
+
+Надежный вариант для гостей - хранить их в Google Sheets. Схему зала лучше окончательно настроить локально и закоммитить `data/layout.json` перед деплоем, либо позже вынести хранение схемы во внешнюю базу.
+
 ## Локальные гости
 
 Если Google Sheets не настроен, приложение читает `data/guests.json`.
