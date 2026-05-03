@@ -119,6 +119,12 @@ GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
 - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 - Instance Type: `Free`
 
+В Environment Variables обязательно добавьте:
+
+```env
+PYTHON_VERSION=3.12.7
+```
+
 ### Важно про бесплатный Render
 
 На бесплатном Render локальная файловая система временная. После redeploy, restart или сна сервиса изменения в файлах могут пропасть.
