@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Список гостей{% endblock %}
+
+{% block content %}
+<section class="result-header">
+  <p class="eyebrow">Список гостей</p>
+  <h1>Найдите себя в списке</h1>
+  <p class="lead">Если поиск по имени не сработал, выберите свою строку вручную.</p>
+</section>
+
+{% include "partials/guest_picker.html" %}
+
+<div class="center-actions">
+  <a class="button-link secondary" href="/search">Вернуться к поиску</a>
+</div>
+{% endblock %}

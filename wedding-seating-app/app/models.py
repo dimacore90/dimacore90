@@ -9,8 +9,7 @@ TableShape = Literal["round", "rectangle"]
 class Guest(BaseModel):
     first_name: str
     last_name: str
-    table_id: str | None = None
-    seat_number: int | None = None
+    table_number: int | None = None
 
 
 class Hall(BaseModel):

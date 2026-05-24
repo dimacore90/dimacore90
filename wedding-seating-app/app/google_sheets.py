@@ -2,15 +2,39 @@ import csv
 import io
 import json
 import ssl
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import urlopen
+
+from pydantic import BaseModel
 
 from app.config import get_settings
 from app.models import Guest
 
 
+class GuestLoadStatus(BaseModel):
+    connected: bool = False
+    source: str = "fallback"
+    guests_count: int = 0
+    last_updated_at: str | None = None
+    message: str = ""
+
+
+class GuestLoadResult(BaseModel):
+    guests: list[Guest]
+    status: GuestLoadStatus
+
+
 def normalize_name(value: str) -> str:
     return " ".join(value.strip().lower().split())
+
+
+def sort_guests(guests: list[Guest]) -> list[Guest]:
+    return sorted(guests, key=lambda guest: (normalize_name(guest.last_name), normalize_name(guest.first_name)))
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _row_value(row: dict, *keys: str) -> str:
@@ -21,24 +45,46 @@ def _row_value(row: dict, *keys: str) -> str:
     return ""
 
 
+def _parse_table_number(value: str) -> int | None:
+    if not value:
+        return None
+
+    digits = "".join(char for char in value if char.isdigit())
+    if not digits:
+        return None
+
+    try:
+        return int(digits)
+    except ValueError:
+        return None
+
+
 def _guest_from_row(row: dict) -> Guest | None:
     first_name = _row_value(row, "first_name", "Имя", "имя")
     last_name = _row_value(row, "last_name", "Фамилия", "фамилия")
-    table_id = _row_value(row, "table_id", "Стол", "стол")
-    seat_number = _row_value(row, "seat_number", "Место", "место")
+    table_number = _row_value(row, "table_number", "Номер стола", "номер стола", "Стол", "стол")
 
     if not first_name or not last_name:
         return None
 
-    try:
-        return Guest(
-            first_name=first_name,
-            last_name=last_name,
-            table_id=table_id or None,
-            seat_number=int(seat_number) if seat_number else None,
-        )
-    except (TypeError, ValueError):
-        return None
+    return Guest(
+        first_name=first_name,
+        last_name=last_name,
+        table_number=_parse_table_number(table_number),
+    )
+
+
+def _load_guests_from_rows(rows: list[dict]) -> list[Guest]:
+    guests = [_guest_from_row(row) for row in rows]
+    return sort_guests([guest for guest in guests if guest is not None])
+
+
+def _read_json_rows(file_path: Path) -> list[dict]:
+    with file_path.open("r", encoding="utf-8") as file:
+        data = json.load(file)
+    if isinstance(data, dict):
+        return data.get("guests", [])
+    return data
 
 
 def _load_fallback_guests() -> list[Guest]:
@@ -46,20 +92,18 @@ def _load_fallback_guests() -> list[Guest]:
     file_path = Path(settings.fallback_guests_file)
 
     if not file_path.exists():
-        return [
-            Guest(first_name="Анна", last_name="Иванова", table_id="table_1", seat_number=3),
-            Guest(first_name="Иван", last_name="Петров", table_id="table_2", seat_number=5),
-            Guest(first_name="Мария", last_name="Смирнова", table_id="table_3", seat_number=2),
-        ]
+        return sort_guests(
+            [
+                Guest(first_name="Анна", last_name="Иванова", table_number=1),
+                Guest(first_name="Иван", last_name="Петров", table_number=2),
+                Guest(first_name="Мария", last_name="Смирнова", table_number=3),
+            ]
+        )
 
     try:
-        with file_path.open("r", encoding="utf-8") as file:
-            rows = json.load(file)
-    except (json.JSONDecodeError, OSError):
+        return _load_guests_from_rows(_read_json_rows(file_path))
+    except (json.JSONDecodeError, OSError, TypeError):
         return []
-
-    guests = [_guest_from_row(row) for row in rows]
-    return [guest for guest in guests if guest is not None]
 
 
 def _load_public_csv_guests() -> list[Guest]:
@@ -80,9 +124,8 @@ def _load_public_csv_guests() -> list[Guest]:
     except OSError:
         return []
 
-    rows = csv.DictReader(io.StringIO(content))
-    guests = [_guest_from_row(row) for row in rows]
-    return [guest for guest in guests if guest is not None]
+    rows = list(csv.DictReader(io.StringIO(content)))
+    return _load_guests_from_rows(rows)
 
 
 def _load_service_account_info() -> dict | None:
@@ -104,7 +147,7 @@ def _load_service_account_info() -> dict | None:
     return None
 
 
-def _load_google_guests() -> list[Guest]:
+def _load_google_api_guests() -> list[Guest]:
     settings = get_settings()
     service_account_info = _load_service_account_info()
     if not settings.google_sheets_id or not service_account_info:
@@ -126,26 +169,97 @@ def _load_google_guests() -> list[Guest]:
     except Exception:
         return []
 
-    guests = [_guest_from_row(row) for row in rows]
-    return [guest for guest in guests if guest is not None]
+    return _load_guests_from_rows(rows)
 
 
-def load_guests() -> list[Guest]:
+def _cache_path() -> Path:
+    return Path(get_settings().guests_cache_file)
+
+
+def _save_cache(guests: list[Guest], source: str) -> GuestLoadStatus:
+    updated_at = _now_iso()
+    file_path = _cache_path()
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with file_path.open("w", encoding="utf-8") as file:
+        json.dump(
+            {
+                "updated_at": updated_at,
+                "source": source,
+                "guests": [guest.model_dump() for guest in guests],
+            },
+            file,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    return GuestLoadStatus(
+        connected=True,
+        source=source,
+        guests_count=len(guests),
+        last_updated_at=updated_at,
+        message="Данные успешно загружены из Google Sheets.",
+    )
+
+
+def _load_cache() -> GuestLoadResult | None:
+    file_path = _cache_path()
+    if not file_path.exists():
+        return None
+
+    try:
+        with file_path.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+        guests = _load_guests_from_rows(data.get("guests", []))
+    except (json.JSONDecodeError, OSError, TypeError):
+        return None
+
+    return GuestLoadResult(
+        guests=guests,
+        status=GuestLoadStatus(
+            connected=False,
+            source=f"cache:{data.get('source', 'unknown')}",
+            guests_count=len(guests),
+            last_updated_at=data.get("updated_at"),
+            message="Google Sheets недоступен, используются данные из локального кэша.",
+        ),
+    )
+
+
+def refresh_guests() -> GuestLoadResult:
     public_csv_guests = _load_public_csv_guests()
     if public_csv_guests:
-        return public_csv_guests
+        return GuestLoadResult(guests=public_csv_guests, status=_save_cache(public_csv_guests, "public_csv"))
 
-    google_guests = _load_google_guests()
-    if google_guests:
-        return google_guests
-    return _load_fallback_guests()
+    google_api_guests = _load_google_api_guests()
+    if google_api_guests:
+        return GuestLoadResult(guests=google_api_guests, status=_save_cache(google_api_guests, "google_api"))
+
+    cached = _load_cache()
+    if cached is not None:
+        return cached
+
+    fallback_guests = _load_fallback_guests()
+    return GuestLoadResult(
+        guests=fallback_guests,
+        status=GuestLoadStatus(
+            connected=False,
+            source="fallback",
+            guests_count=len(fallback_guests),
+            message="Google Sheets не настроен или недоступен, используются локальные тестовые данные.",
+        ),
+    )
 
 
-def find_guest(first_name: str, last_name: str) -> Guest | None:
+def load_guests() -> GuestLoadResult:
+    return refresh_guests()
+
+
+def find_guest(first_name: str, last_name: str, guests: list[Guest] | None = None) -> Guest | None:
     wanted_first_name = normalize_name(first_name)
     wanted_last_name = normalize_name(last_name)
+    candidates = guests if guests is not None else load_guests().guests
 
-    for guest in load_guests():
+    for guest in candidates:
         if (
             normalize_name(guest.first_name) == wanted_first_name
             and normalize_name(guest.last_name) == wanted_last_name

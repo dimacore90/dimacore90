@@ -1,24 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Найти место за столом{% endblock %}
+{% block title %}Свадебная рассадка{% endblock %}
+{% block body_class %}home-page{% endblock %}
 
 {% block content %}
 <section class="guest-hero">
-  <div class="ornament">♡</div>
-  <p class="eyebrow">Добро пожаловать на свадьбу</p>
-  <h1>Найдите своё место за праздничным столом</h1>
-  <p class="lead">Введите имя и фамилию так, как они указаны в приглашении.</p>
+  <div class="hero-divider">
+    <span></span>
+    <strong>♥</strong>
+    <span></span>
+  </div>
+  <p class="eyebrow wedding-eyebrow">Добро пожаловать на свадьбу</p>
+  <p class="lead wedding-lead">Посмотрите общий план зала и нажмите кнопку, чтобы узнать номер своего стола.</p>
+  <a class="button-link primary" href="/search">Найти свое место</a>
+</section>
 
-  <form class="search-form" action="/result" method="post">
-    <label>
-      <span>Имя</span>
-      <input type="text" name="first_name" autocomplete="given-name" required placeholder="Анна">
-    </label>
-    <label>
-      <span>Фамилия</span>
-      <input type="text" name="last_name" autocomplete="family-name" required placeholder="Иванова">
-    </label>
-    <button type="submit">Найти моё место</button>
-  </form>
+<section class="section">
+  <div class="hall-map image-map" style="--hall-width: {{ layout.hall.width }}; --hall-height: {{ layout.hall.height }};">
+    <img src="{{ url_for('static', path='/images/seating-plan.png') }}" alt="План рассадки гостей по столам">
+  </div>
 </section>
 {% endblock %}

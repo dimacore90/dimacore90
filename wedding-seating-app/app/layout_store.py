@@ -5,11 +5,17 @@ from app.models import Hall, Layout, Table
 
 
 DEFAULT_LAYOUT = Layout(
-    hall=Hall(width=1000, height=700),
+    hall=Hall(width=1024, height=1536),
     tables=[
-        Table(id="table_1", name="Стол 1", x=200, y=150, shape="round", seats=8),
-        Table(id="table_2", name="Стол 2", x=500, y=150, shape="round", seats=10),
-        Table(id="table_3", name="Стол 3", x=780, y=330, shape="rectangle", seats=8),
+        Table(id="table_1", name="Стол 1", x=226, y=1110, shape="round", seats=8),
+        Table(id="table_2", name="Стол 2", x=200, y=914, shape="round", seats=8),
+        Table(id="table_3", name="Стол 3", x=216, y=720, shape="round", seats=8),
+        Table(id="table_4", name="Стол 4", x=346, y=540, shape="round", seats=8),
+        Table(id="table_5", name="Стол 5", x=520, y=506, shape="round", seats=8),
+        Table(id="table_6", name="Стол 6", x=708, y=540, shape="round", seats=8),
+        Table(id="table_7", name="Стол 7", x=824, y=720, shape="round", seats=8),
+        Table(id="table_8", name="Стол 8", x=826, y=914, shape="round", seats=8),
+        Table(id="table_9", name="Стол 9", x=810, y=1118, shape="round", seats=8),
     ],
 )
 

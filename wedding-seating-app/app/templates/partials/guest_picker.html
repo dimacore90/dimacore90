@@ -1,0 +1,14 @@
+<div class="guest-list">
+  {% for guest in guests %}
+    <form class="guest-card" action="/guest/select" method="post">
+      <input type="hidden" name="first_name" value="{{ guest.first_name }}">
+      <input type="hidden" name="last_name" value="{{ guest.last_name }}">
+      <button type="submit">
+        <span>{{ guest.last_name }} {{ guest.first_name }}</span>
+        <small>{{ "Стол " ~ guest.table_number if guest.table_number else "Стол не назначен" }}</small>
+      </button>
+    </form>
+  {% else %}
+    <p class="muted">Список гостей пуст. Проверьте настройки Google Sheets.</p>
+  {% endfor %}
+</div>

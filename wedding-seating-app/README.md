@@ -1,35 +1,111 @@
 # Свадебная рассадка гостей
 
-MVP сервиса для свадьбы: гость открывает сайт по QR-коду, вводит имя и фамилию, видит свой стол, место, общую схему зала и крупную схему выбранного стола.
+Простой MVP онлайн-сервиса для свадьбы: гости открывают один общий QR-код или ссылку, смотрят схему зала, вводят имя и фамилию и получают номер своего стола.
 
-## Возможности
+Интерфейс полностью на русском языке и рассчитан на мобильный экран.
 
-- публичная страница поиска гостя;
-- поиск без учета регистра и лишних пробелов;
-- fallback на локальные тестовые данные, если Google Sheets не настроен;
-- визуальная схема зала и подсветка нужного стола;
-- крупная схема стола и подсветка места гостя;
-- простая админка с логином и паролем;
-- добавление, редактирование и удаление столов;
-- сохранение схемы в `data/layout.json`;
-- адаптивный русский интерфейс.
+## Что умеет сервис
 
-## Установка
+- главная страница с приветствием и планом из 9 столов;
+- поиск гостя по имени и фамилии без учета регистра и лишних пробелов;
+- показ номера стола, если гость найден;
+- показ алфавитного списка гостей, если точное совпадение не найдено;
+- выбор гостя из списка вручную;
+- простая админка без пароля;
+- просмотр гостей из Google Sheets;
+- ручное обновление данных из Google Sheets;
+- диагностическая информация: статус подключения, источник данных, количество гостей, время последнего обновления;
+- локальный JSON-кэш, чтобы сайт продолжал работать, если Google Sheets временно недоступен;
+- fallback на локальные тестовые данные для разработки.
 
-```bash
-cd wedding-seating-app
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+## Архитектура MVP
+
+Стек намеренно простой:
+
+- `FastAPI` - backend и маршруты;
+- `Jinja2` - server-rendered HTML-страницы;
+- `HTML/CSS` - мобильный интерфейс без сложного frontend-фреймворка;
+- `gspread` и `google-auth` - чтение Google Sheets через service account;
+- публичный CSV Google Sheets - самый простой вариант без Google Cloud;
+- локальные JSON-файлы в `data/` - схема зала, fallback-данные и кэш гостей;
+- `pytest` - минимальные тесты поиска.
+
+## Структура проекта
+
+```text
+wedding-seating-app/
+  app/
+    main.py              # FastAPI routes
+    config.py            # настройки из .env
+    google_sheets.py     # загрузка, кэш и поиск гостей
+    layout_store.py      # схема 9 столов
+    models.py            # Pydantic-модели
+    templates/           # Jinja2 templates
+    static/css/style.css # стили
+  data/
+    guests.json          # локальные тестовые гости
+    layout.json          # схема столов
+  tests/
+    test_guest_search.py
+  .env.example
+  requirements.txt
+  runtime.txt
 ```
 
-Для Windows:
+## Формат Google Sheets
 
-```bash
-cd wedding-seating-app
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+Создайте таблицу с колонками:
+
+| Имя | Фамилия | Номер стола |
+|---|---|---|
+| Анна | Иванова | 1 |
+| Иван | Петров | 2 |
+
+Также поддерживаются технические названия колонок:
+
+| first_name | last_name | table_number |
+|---|---|---|
+| Анна | Иванова | 1 |
+
+## Настройка через публичный CSV
+
+Самый простой способ для MVP:
+
+1. Откройте Google Sheet.
+2. Нажмите `Share`.
+3. Дайте доступ `Anyone with the link` в режиме `Viewer`.
+4. Скопируйте ID таблицы из URL.
+5. Укажите CSV-ссылку в `.env`.
+
+Формат ссылки:
+
+```env
+GOOGLE_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/ID_ТАБЛИЦЫ/export?format=csv&gid=0
+```
+
+## Настройка через Google Sheets API
+
+Если таблицу нельзя делать публичной:
+
+1. Создайте проект в Google Cloud.
+2. Включите Google Sheets API.
+3. Создайте Service Account.
+4. Скачайте JSON-ключ.
+5. Откройте Google Sheet и дайте доступ email-адресу service account.
+6. Укажите настройки в `.env`.
+
+Вариант с JSON одной строкой:
+
+```env
+GOOGLE_SHEETS_ID=ID_ТАБЛИЦЫ
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
+```
+
+Вариант с файлом:
+
+```env
+GOOGLE_SHEETS_ID=ID_ТАБЛИЦЫ
+GOOGLE_SERVICE_ACCOUNT_FILE=service-account.json
 ```
 
 ## Настройка `.env`
@@ -40,237 +116,137 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Минимально для локального запуска можно оставить Google-поля пустыми:
+Минимальный пример:
 
 ```env
 GOOGLE_SHEETS_ID=
 GOOGLE_SHEETS_CSV_URL=
 GOOGLE_SERVICE_ACCOUNT_JSON=
 GOOGLE_SERVICE_ACCOUNT_FILE=
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=change_me
-SECRET_KEY=change_me
+LAYOUT_FILE=data/layout.json
+FALLBACK_GUESTS_FILE=data/guests.json
+GUESTS_CACHE_FILE=data/guests_cache.json
 ```
 
-Для реального использования обязательно поменяйте `ADMIN_PASSWORD` и `SECRET_KEY`.
+Если Google Sheets не настроен, приложение использует `data/guests.json`.
 
-## Запуск
+## Локальный запуск
 
 ```bash
+cd wedding-seating-app
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Чтобы сайт открывался с телефона по QR-коду в той же Wi-Fi сети, запускайте сервер так:
+Для Windows:
+
+```bash
+cd wedding-seating-app
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Адреса после запуска:
+
+- главная страница: `http://127.0.0.1:8000/`
+- поиск гостя: `http://127.0.0.1:8000/search`
+- список гостей: `http://127.0.0.1:8000/guests`
+- админка: `http://127.0.0.1:8000/admin`
+
+Чтобы открыть сайт с телефона в той же Wi-Fi сети:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-После запуска:
+Затем откройте на телефоне:
 
-- сайт гостей: `http://127.0.0.1:8000/`
-- сайт гостей с телефона в текущей Wi-Fi сети: `http://192.168.1.79:8000/`
-- админка: `http://127.0.0.1:8000/admin`
-- страница входа: `http://127.0.0.1:8000/admin/login`
+```text
+http://IP_ВАШЕГО_КОМПЬЮТЕРА:8000/
+```
 
-Логин и пароль по умолчанию:
+## Тесты
 
-- логин: `admin`
-- пароль: `change_me`
+```bash
+cd wedding-seating-app
+pytest
+```
+
+## Как заменить макет столов
+
+MVP использует готовую картинку плана:
+
+```text
+app/static/images/seating-plan.png
+```
+
+Чтобы заменить макет, положите новый файл по этому же пути или измените путь к изображению в шаблонах `index.html` и `result.html`.
+
+Для подсветки найденного стола используются координаты из `data/layout.json`. Если новый макет отличается, измените координаты `x` и `y` у столов:
+
+```json
+{
+  "id": "table_1",
+  "name": "Стол 1",
+  "x": 180,
+  "y": 145,
+  "shape": "round",
+  "seats": 8
+}
+```
+
+Координаты задаются относительно размера зала:
+
+```json
+{
+  "hall": {
+    "width": 1024,
+    "height": 1536
+  }
+}
+```
+
+Сейчас конкретные места за столом не показываются, только номер стола.
 
 ## Деплой на Render
 
-Проект подготовлен для Render через файл `render.yaml` в корне репозитория.
+Проект уже подготовлен к Render через `render.yaml` в корне репозитория.
 
-### Вариант 1: Blueprint
+Вариант через Blueprint:
 
 1. Загрузите репозиторий на GitHub.
-2. В Render нажмите `New` -> `Blueprint`.
+2. В Render выберите `New` -> `Blueprint`.
 3. Выберите этот репозиторий.
-4. Render прочитает `render.yaml` и создаст web service.
-5. В переменных окружения задайте обязательные значения:
+4. Render прочитает `render.yaml`.
+5. Добавьте переменные окружения для Google Sheets.
 
-```env
-ADMIN_PASSWORD=надежный_пароль
-```
-
-Для гостей из Google Sheets укажите один из вариантов:
-
-```env
-GOOGLE_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/ID_ТАБЛИЦЫ/export?format=csv&gid=0
-```
-
-или:
-
-```env
-GOOGLE_SHEETS_ID=ID_ТАБЛИЦЫ
-GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
-```
-
-`SECRET_KEY` Render сгенерирует автоматически.
-
-### Вариант 2: Web Service вручную
-
-Если создаете сервис вручную, выберите:
+Вариант вручную:
 
 - Root Directory: `wedding-seating-app`
 - Runtime: `Python`
 - Build Command: `pip install -r requirements.txt`
 - Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Instance Type: `Free`
+- Environment Variable: `PYTHON_VERSION=3.12.7`
 
-В Environment Variables обязательно добавьте:
+Для MVP Render подходит лучше всего: минимум настроек, бесплатный старт, понятный деплой из GitHub.
 
-```env
-PYTHON_VERSION=3.12.7
-```
-
-### Важно про бесплатный Render
-
-На бесплатном Render локальная файловая система временная. После redeploy, restart или сна сервиса изменения в файлах могут пропасть.
-
-Для этого проекта это касается:
-
-- `data/layout.json` - схема зала;
-- `data/guests.json` - fallback-список гостей.
-
-Надежный вариант для гостей - хранить их в Google Sheets. Схему зала лучше окончательно настроить локально и закоммитить `data/layout.json` перед деплоем, либо позже вынести хранение схемы во внешнюю базу.
-
-## Локальные гости
-
-Если Google Sheets не настроен, приложение читает `data/guests.json`.
-
-Сейчас в локальном файле:
-
-- Дима Коростелев
-- Виталия Мосейчук
-- Семен Болдов
-- Вероника Болдова
-
-## Подключение Google Sheets
-
-Создайте Google Sheet с колонками:
-
-| first_name | last_name | table_id | seat_number |
-|---|---|---|---|
-| Анна | Иванова | table_1 | 3 |
-| Иван | Петров | table_2 | 5 |
-
-Если в таблице есть только колонки `Имя` и `Фамилия`, приложение тоже найдет гостя, но покажет сообщение, что место пока не назначено.
-
-### Без Google Cloud
-
-Откройте доступ к таблице по ссылке в режиме `Viewer` и укажите публичный CSV:
-
-```env
-GOOGLE_SHEETS_CSV_URL=https://docs.google.com/spreadsheets/d/ID_ТАБЛИЦЫ/export?format=csv&gid=0
-```
-
-В этом режиме service account не нужен.
-
-### Через Google Cloud
-
-Порядок настройки:
-
-1. Создайте проект в Google Cloud.
-2. Включите Google Sheets API.
-3. Создайте Service Account.
-4. Создайте JSON-ключ для Service Account.
-5. Откройте Google Sheet и дайте доступ email-адресу Service Account.
-6. В `.env` укажите ID таблицы и JSON ключ одной строкой.
-
-Пример:
-
-```env
-GOOGLE_SHEETS_ID=1abcDEFВашIDтаблицы
-GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}
-```
-
-Можно не вставлять JSON в `.env`, а сохранить скачанный ключ в файл `service-account.json` в корне проекта:
-
-```env
-GOOGLE_SHEETS_ID=1abcDEFВашIDтаблицы
-GOOGLE_SERVICE_ACCOUNT_FILE=service-account.json
-```
-
-ID таблицы находится в URL:
-
-```text
-https://docs.google.com/spreadsheets/d/ID_ТАБЛИЦЫ/edit
-```
-
-Если Google Sheets недоступен или переменные не заполнены, приложение автоматически использует `data/guests.json`.
-
-## Изменение схемы зала
-
-Через админку:
-
-1. Откройте `http://127.0.0.1:8000/admin`.
-2. Войдите.
-3. Нажмите `Добавить стол` или `Редактировать`.
-4. Укажите ID, название, координаты `x` и `y`, форму и количество мест.
-5. Нажмите `Сохранить`.
-
-Схема хранится в `data/layout.json`.
-
-Формат:
-
-```json
-{
-  "hall": {
-    "width": 1000,
-    "height": 700
-  },
-  "tables": [
-    {
-      "id": "table_1",
-      "name": "Стол 1",
-      "x": 200,
-      "y": 150,
-      "shape": "round",
-      "seats": 8
-    }
-  ]
-}
-```
-
-Важно: `table_id` у гостя в Google Sheets или `data/guests.json` должен совпадать с `id` стола в `layout.json`.
+Важно: файловая система на бесплатном Render временная. Кэш гостей может исчезнуть после restart/redeploy. Основным источником данных должен оставаться Google Sheets.
 
 ## QR-код
 
-QR-код должен вести на публичный URL главной страницы.
-
-Локально это:
+QR-код должен вести на публичную главную страницу сайта:
 
 ```text
-http://127.0.0.1:8000/
+https://ваш-домен.onrender.com/
 ```
 
-Для телефона в той же Wi-Fi сети используйте IP компьютера:
+После публикации можно создать QR-код любым онлайн-генератором:
 
-```text
-http://192.168.1.79:8000/
-```
-
-После деплоя замените адрес на публичный домен или ссылку хостинга.
-
-## Структура проекта
-
-```text
-wedding-seating-app/
-  app/
-    main.py
-    config.py
-    google_sheets.py
-    layout_store.py
-    models.py
-    auth.py
-    templates/
-    static/
-  data/
-    layout.json
-    guests.json
-  .env.example
-  requirements.txt
-  README.md
-```
+1. Скопируйте публичный URL главной страницы.
+2. Откройте любой генератор QR-кодов.
+3. Вставьте URL.
+4. Скачайте QR-код и разместите его на приглашении или табличке у входа.

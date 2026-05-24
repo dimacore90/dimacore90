@@ -6,57 +6,55 @@
 {% block content %}
 <header class="admin-header">
   <div>
-    <p class="eyebrow">Управление рассадкой</p>
-    <h1>Схема зала</h1>
+    <p class="eyebrow">Админка</p>
+    <h1>Данные гостей</h1>
   </div>
-  <div class="admin-actions">
-    <a class="button-link" href="/admin/table/new">Добавить стол</a>
-    <form action="/admin/logout" method="post">
-      <button class="ghost-button" type="submit">Выйти</button>
-    </form>
-  </div>
+  <form action="/admin/refresh" method="post">
+    <button type="submit">Обновить из Google Sheets</button>
+  </form>
 </header>
 
-<section class="admin-grid">
-  <div class="admin-panel">
-    <h2>Текущая схема</h2>
-    <div class="hall-map admin-map" style="--hall-width: {{ layout.hall.width }}; --hall-height: {{ layout.hall.height }};">
-      {% for item in layout.tables %}
-        <div
-          class="map-table {{ item.shape }}"
-          style="left: {{ (item.x / layout.hall.width * 100)|round(2) }}%; top: {{ (item.y / layout.hall.height * 100)|round(2) }}%;"
-        >
-          <span>{{ item.name }}</span>
-        </div>
-      {% endfor %}
-    </div>
-  </div>
+<section class="status-grid">
+  <article class="status-card">
+    <span>Подключение</span>
+    <strong>{{ "успешно" if status.connected else "нет подключения" }}</strong>
+  </article>
+  <article class="status-card">
+    <span>Источник</span>
+    <strong>{{ status.source }}</strong>
+  </article>
+  <article class="status-card">
+    <span>Гостей загружено</span>
+    <strong>{{ status.guests_count }}</strong>
+  </article>
+  <article class="status-card">
+    <span>Последнее обновление</span>
+    <strong>{{ status.last_updated_at or "нет данных" }}</strong>
+  </article>
+</section>
 
-  <div class="admin-panel">
-    <h2>Столы</h2>
-    <div class="table-list">
-      {% for item in layout.tables %}
-        <article class="table-row">
-          <div>
-            <strong>{{ item.name }}</strong>
-            <span>{{ item.id }} · {{ item.seats }} мест · {{ "круглый" if item.shape == "round" else "прямоугольный" }}</span>
-            <small>x: {{ item.x }}, y: {{ item.y }}</small>
-          </div>
-          <div class="row-actions">
-            <a href="/admin/table/{{ item.id }}/edit">Редактировать</a>
-            <form action="/admin/table/{{ item.id }}/delete" method="post" data-confirm="Удалить {{ item.name }}?">
-              <button type="submit">Удалить</button>
-            </form>
-          </div>
-        </article>
-      {% else %}
-        <p class="muted">Столов пока нет.</p>
-      {% endfor %}
+<p class="notice">{{ status.message }}</p>
+
+<section class="section">
+  <div class="section-title">
+    <p class="eyebrow">Google Sheets</p>
+    <h2>Список гостей</h2>
+  </div>
+  <div class="admin-table">
+    <div class="admin-table-row heading">
+      <span>Фамилия</span>
+      <span>Имя</span>
+      <span>Номер стола</span>
     </div>
+    {% for guest in guests %}
+      <div class="admin-table-row">
+        <span>{{ guest.last_name }}</span>
+        <span>{{ guest.first_name }}</span>
+        <span>{{ guest.table_number or "не назначен" }}</span>
+      </div>
+    {% else %}
+      <p class="muted">Гостей пока нет.</p>
+    {% endfor %}
   </div>
 </section>
-{% endblock %}
-
-{% block scripts %}
-<script src="{{ url_for('static', path='/js/admin.js') }}"></script>
 {% endblock %}

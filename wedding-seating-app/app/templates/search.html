@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Поиск гостя{% endblock %}
+
+{% block content %}
+<section class="guest-hero compact">
+  <p class="eyebrow">Поиск места</p>
+  <h1>Введите имя и фамилию</h1>
+  <p class="lead">Пишите так, как указано в приглашении. Регистр и лишние пробелы не важны.</p>
+
+  <form class="search-form" action="/result" method="post">
+    <label>
+      <span>Имя</span>
+      <input type="text" name="first_name" autocomplete="given-name" required placeholder="Анна">
+    </label>
+    <label>
+      <span>Фамилия</span>
+      <input type="text" name="last_name" autocomplete="family-name" required placeholder="Иванова">
+    </label>
+    <button type="submit">Показать мой стол</button>
+  </form>
+</section>
+{% endblock %}

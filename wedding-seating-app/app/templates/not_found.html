@@ -1,15 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title|default("Гость не найден", true) }}{% endblock %}
+{% block title %}Гость не найден{% endblock %}
 
 {% block content %}
 <section class="guest-hero compact">
-  <div class="ornament">♡</div>
-  <p class="eyebrow">Проверим ещё раз</p>
-  <h1>{{ heading|default("Мы не нашли вас в списке", true) }}</h1>
-  <p class="lead">
-    {{ message|default("Проверьте написание имени и фамилии или обратитесь к организатору.", true) }}
-  </p>
-  <a class="button-link" href="/">Вернуться к поиску</a>
+  <p class="eyebrow">Проверим по списку</p>
+  <h1>Мы не нашли точное совпадение</h1>
+  <p class="lead">Выберите себя из общего списка гостей. Список отсортирован по фамилии.</p>
+  <a class="button-link secondary" href="/search">Попробовать еще раз</a>
+</section>
+
+<section class="section">
+  <div class="section-title">
+    <p class="eyebrow">Список гостей</p>
+    <h2>Выберите себя</h2>
+  </div>
+  {% include "partials/guest_picker.html" %}
 </section>
 {% endblock %}

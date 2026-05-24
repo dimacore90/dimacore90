@@ -1,5 +1,5 @@
-.env
-service-account.json
 .venv/
 __pycache__/
-*.py[cod]
+*.pyc
+.env
+data/guests_cache.json

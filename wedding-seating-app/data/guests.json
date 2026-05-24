@@ -2,25 +2,21 @@
   {
     "first_name": "Дима",
     "last_name": "Коростелев",
-    "table_id": null,
-    "seat_number": null
+    "table_number": 1
   },
   {
     "first_name": "Виталия",
     "last_name": "Мосейчук",
-    "table_id": null,
-    "seat_number": null
+    "table_number": 2
   },
   {
     "first_name": "Семен",
     "last_name": "Болдов",
-    "table_id": null,
-    "seat_number": null
+    "table_number": 3
   },
   {
     "first_name": "Вероника",
     "last_name": "Болдова",
-    "table_id": null,
-    "seat_number": null
+    "table_number": 3
   }
 ]

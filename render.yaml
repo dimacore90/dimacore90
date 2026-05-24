@@ -10,12 +10,6 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: ADMIN_USERNAME
-        value: admin
-      - key: ADMIN_PASSWORD
-        sync: false
-      - key: SECRET_KEY
-        generateValue: true
       - key: GOOGLE_SHEETS_ID
         sync: false
       - key: GOOGLE_SHEETS_CSV_URL
@@ -28,3 +22,5 @@ services:
         value: data/layout.json
       - key: FALLBACK_GUESTS_FILE
         value: data/guests.json
+      - key: GUESTS_CACHE_FILE
+        value: data/guests_cache.json
