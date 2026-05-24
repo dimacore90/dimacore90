@@ -4,17 +4,17 @@
 
 {% block content %}
 <section class="guest-hero compact">
-  <p class="eyebrow">Проверим по списку</p>
-  <h1>Мы не нашли точное совпадение</h1>
-  <p class="lead">Выберите себя из общего списка гостей. Список отсортирован по фамилии.</p>
+  <div class="hero-divider">
+    <span></span>
+    <strong>♥</strong>
+    <span></span>
+  </div>
+  <h1 class="search-title">Мы не нашли точное совпадение</h1>
+  <p class="lead wedding-lead">Выберите себя из общего списка гостей</p>
   <a class="button-link secondary" href="/search">Попробовать еще раз</a>
 </section>
 
 <section class="section">
-  <div class="section-title">
-    <p class="eyebrow">Список гостей</p>
-    <h2>Выберите себя</h2>
-  </div>
   {% include "partials/guest_picker.html" %}
 </section>
 {% endblock %}

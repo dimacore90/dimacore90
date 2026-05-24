@@ -3,16 +3,20 @@
 {% block title %}Ваш стол{% endblock %}
 
 {% block content %}
-<section class="result-header">
-  <p class="eyebrow">Ваше место найдено</p>
-  <h1>{{ guest.first_name }} {{ guest.last_name }}</h1>
+<section class="guest-hero result-hero">
+  <div class="hero-divider">
+    <span></span>
+    <strong>♥</strong>
+    <span></span>
+  </div>
+  <p class="eyebrow wedding-eyebrow">Ваше место найдено</p>
+  <h1 class="result-title">{{ guest.first_name }} {{ guest.last_name }}</h1>
   <div class="result-summary">
     <span>{{ table_name }}</span>
   </div>
 </section>
 
 <section class="section">
-  <h2>План зала</h2>
   <div class="hall-map image-map" style="--hall-width: {{ layout.hall.width }}; --hall-height: {{ layout.hall.height }};">
     <img src="{{ url_for('static', path='/images/seating-plan.png') }}" alt="План рассадки гостей по столам">
     {% for item in layout.tables %}

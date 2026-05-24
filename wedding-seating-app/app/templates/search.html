@@ -4,11 +4,14 @@
 
 {% block content %}
 <section class="guest-hero compact">
-  <p class="eyebrow">Поиск места</p>
-  <h1>Введите имя и фамилию</h1>
-  <p class="lead">Пишите так, как указано в приглашении. Регистр и лишние пробелы не важны.</p>
+  <div class="hero-divider">
+    <span></span>
+    <strong>♥</strong>
+    <span></span>
+  </div>
+  <h1 class="search-title">Введите имя и фамилию</h1>
 
-  <form class="search-form" action="/result" method="post">
+  <form class="search-form wedding-search-form" action="/result" method="post">
     <label>
       <span>Имя</span>
       <input type="text" name="first_name" autocomplete="given-name" required placeholder="Анна">
